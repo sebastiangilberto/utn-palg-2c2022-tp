@@ -1,0 +1,66 @@
+@startuml
+
+interface PersistentObjects {
+  void creteSession(long, long)
+  void store(long, Object)
+  Object load(long, Class<?>)
+  Object remove(long, Class<?>)
+  void destroySession(long)
+  void addListener(SessionListener)
+  void removeListener(Listener)
+}
+
+class PersistentObjectsImpl {
+  ListenersList: List<SessionListener>
+  Mapper: ClassMapper
+  Session: Session
+  Repository: ClassRepository
+}
+
+interface SessionListener {
+  void sessionClosed(long)
+  void sessionStillClosed(long)
+  void sessionOpened(long)
+  void sessionStillOpened(long)
+}
+
+class LoggerSessionListener {
+  Logger: Logger
+}
+
+class Session {
+  Key: String
+  Timeout: int
+  Status: SessionStatus
+  void close()
+  void open()
+}
+
+enum SessionStatus{
+  OPEN, CLOSED  
+}
+
+class ClassMapper {
+  toObject(String, Class)
+  toJson(Object)
+}
+
+class ClassRepository {
+  findByKey(String)
+  deleteByKey(String)
+}
+
+interface CrudRepository{
+  save(Entity)
+}
+
+LoggerSessionListener --|> SessionListener
+PersistentObjectsImpl --|> PersistentObjects
+PersistentObjectsImpl --> Session
+PersistentObjectsImpl --> ClassMapper
+PersistentObjectsImpl --> ClassRepository
+PersistentObjectsImpl "1" --> "N" SessionListener
+Session --> SessionStatus
+ClassRepository --|> CrudRepository
+
+@enduml
