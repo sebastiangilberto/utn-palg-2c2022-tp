@@ -1,7 +1,7 @@
 package com.palg.tp;
 
-import com.palg.tp.todelete.Customer;
-import com.palg.tp.todelete.CustomerRepository;
+import com.palg.tp.DAO.ObjectDetail;
+import com.palg.tp.DAO.ObjectDetailRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -19,39 +19,37 @@ public class TpApplication {
 	}
 
 	@Bean
-	public CommandLineRunner demo(CustomerRepository repository) {
+	public CommandLineRunner demo(ObjectDetailRepository repository) {
 		return (args) -> {
 			// save a few customers
-			repository.save(new Customer("Jack", "Bauer"));
-			repository.save(new Customer("Chloe", "O'Brian"));
-			repository.save(new Customer("Kim", "Bauer"));
-			repository.save(new Customer("David", "Palmer"));
-			repository.save(new Customer("Michelle", "Dessler"));
+			repository.save(new ObjectDetail(1L, "a"));
+			repository.save(new ObjectDetail(2L, "b"));
+			repository.save(new ObjectDetail(3L, "c"));
 
 			// fetch all customers
-			log.info("Customers found with findAll():");
+			log.info("ObjectDetail found with findAll():");
 			log.info("-------------------------------");
-			for (Customer customer : repository.findAll()) {
-				log.info(customer.toString());
+			for (ObjectDetail objectDetail : repository.findAll()) {
+				log.info(objectDetail.toString());
 			}
 			log.info("");
 
 			// fetch an individual customer by ID
-			Customer customer = repository.findById(1L);
-			log.info("Customer found with findById(1L):");
+			ObjectDetail objectDetail = repository.findById(1L).get();
+			log.info("Object detail with key 1L:");
 			log.info("--------------------------------");
-			log.info(customer.toString());
+			log.info(objectDetail.toString());
 			log.info("");
 
 			// fetch customers by last name
-			log.info("Customer found with findByLastName('Bauer'):");
+			log.info("Delete ObjectDetail with key 1L:");
 			log.info("--------------------------------------------");
-			repository.findByLastName("Bauer").forEach(bauer -> {
-				log.info(bauer.toString());
-			});
-			// for (Customer bauer : repository.findByLastName("Bauer")) {
-			//  log.info(bauer.toString());
-			// }
+			repository.deleteById(1L);
+			log.info("ObjectDetail found with findAll():");
+			log.info("-------------------------------");
+			for (ObjectDetail ob : repository.findAll()) {
+				log.info(ob.toString());
+			}
 			log.info("");
 		};
 	}
