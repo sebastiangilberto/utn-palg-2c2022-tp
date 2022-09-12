@@ -12,9 +12,9 @@ interface PersistentObjects {
 
 class PersistentObjectsImpl {
   ListenersList: List<SessionListener>
-  Mapper: ClassMapper
+  Mapper: ObjectDetailsMapper
   Session: Session
-  Repository: ClassRepository
+  Repository: ObjectDetailsRepository
 }
 
 interface SessionListener {
@@ -37,15 +37,15 @@ class Session {
 }
 
 enum SessionStatus{
-  OPEN, CLOSED  
+  OPEN, CLOSED
 }
 
-class ClassMapper {
+class ObjectDetailsMapper {
   toObject(String, Class)
   toJson(Object)
 }
 
-class ClassRepository {
+class ObjectDetailsRepository {
   findByKey(String)
   deleteByKey(String)
 }
@@ -57,10 +57,10 @@ interface CrudRepository{
 LoggerSessionListener --|> SessionListener
 PersistentObjectsImpl --|> PersistentObjects
 PersistentObjectsImpl --> Session
-PersistentObjectsImpl --> ClassMapper
-PersistentObjectsImpl --> ClassRepository
+PersistentObjectsImpl --> ObjectDetailsMapper
+PersistentObjectsImpl --> ObjectDetailsRepository
 PersistentObjectsImpl "1" --> "N" SessionListener
 Session --> SessionStatus
-ClassRepository --|> CrudRepository
+ObjectDetailsRepository --|> CrudRepository
 
 @enduml
