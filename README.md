@@ -9,4 +9,4 @@
 
 #### Diagrama de clases 
 
-<img src="src/main/resources/static/palg-diagrama-clases.svg">
+<img src="src/main/resources/static/palg-diagrama-clases.png" alt="diagrama de clases">
