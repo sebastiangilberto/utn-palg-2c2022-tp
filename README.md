@@ -6,6 +6,7 @@
 - Sebastian Anibal Gilberto - 1699830
 - María Belén Tripodi - 1589817
 - Gaspar Habif - 1680079
+- Martin Rosinke - 1597425
 
 #### Diagrama de clases 
 
