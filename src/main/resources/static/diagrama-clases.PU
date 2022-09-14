@@ -1,27 +1,40 @@
 @startuml
 
 interface PersistentObjects {
-  void creteSession(long, long)
-  void store(long, Object)
-  Object load(long, Class<?>)
-  Object remove(long, Class<?>)
-  void destroySession(long)
-  void addListener(SessionListener)
-  void removeListener(Listener)
+  +void creteSession(long, long)
+  +void store(long, Object)
+  +Object load(long, Class<?>)
+  +Object remove(long, Class<?>)
+  +void destroySession(long)
+  +void addListener(SessionListener)
+  +void removeListener(SessionListener)
 }
 
 class PersistentObjectsImpl {
-  ListenersList: List<SessionListener>
+  Notifier: Notifier
   Mapper: ObjectDetailsMapper
   Session: Session
   Repository: ObjectDetailsRepository
 }
 
+interface Notifier {
+  +void sessionClosed(long)
+  +void sessionStillClosed(long)
+  +void sessionOpened(long)
+  +void sessionStillOpened(long)
+  +void addListener(SessionListener)
+  +void removeListener(SessionListener)
+}
+
+class SequentialNotifier {
+  Listeners: List<SessionListener>
+}
+
 interface SessionListener {
-  void sessionClosed(long)
-  void sessionStillClosed(long)
-  void sessionOpened(long)
-  void sessionStillOpened(long)
+  +void sessionClosed(long)
+  +void sessionStillClosed(long)
+  +void sessionOpened(long)
+  +void sessionStillOpened(long)
 }
 
 class LoggerSessionListener {
@@ -32,8 +45,8 @@ class Session {
   Key: String
   Timeout: int
   Status: SessionStatus
-  void close()
-  void open()
+  +void close()
+  +void open()
 }
 
 enum SessionStatus{
@@ -41,17 +54,17 @@ enum SessionStatus{
 }
 
 class ObjectDetailsMapper {
-  toObject(String, Class)
-  toJson(Object)
+  +toObject(String, Class)
+  +toJson(Object)
 }
 
 class ObjectDetailsRepository {
-  findByKey(String)
-  deleteByKey(String)
+  +findByKey(String)
+  +deleteByKey(String)
 }
 
 interface CrudRepository{
-  save(Entity)
+  +save(Entity)
 }
 
 LoggerSessionListener --|> SessionListener
@@ -59,7 +72,9 @@ PersistentObjectsImpl --|> PersistentObjects
 PersistentObjectsImpl --> Session
 PersistentObjectsImpl --> ObjectDetailsMapper
 PersistentObjectsImpl --> ObjectDetailsRepository
-PersistentObjectsImpl "1" --> "N" SessionListener
+PersistentObjectsImpl --> Notifier
+SequentialNotifier --|> Notifier
+Notifier "1" --> "N" SessionListener
 Session --> SessionStatus
 ObjectDetailsRepository --|> CrudRepository
 
