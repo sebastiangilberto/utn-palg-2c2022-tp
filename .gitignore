@@ -32,6 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### Intellij ###
+*.DS_Store
+
 mvnw*
 .mvn
 

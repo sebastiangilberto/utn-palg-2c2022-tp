@@ -1,9 +1,14 @@
 package com.palg.tp.session;
 
 public class Session {
-
     private long key;
-    private long timeout;
+
+    private final long timeout;
+
+    // TODO: ver si va un  ttl o mejor un lastAccess para comparar
+    private long ttl;
+
+    private long lastAccess;
     private SessionStatus status;
 
     public Session(long key, long timeout) {
