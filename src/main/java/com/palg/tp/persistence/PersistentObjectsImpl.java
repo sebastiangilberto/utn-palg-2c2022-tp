@@ -2,88 +2,70 @@ package com.palg.tp.persistence;
 
 
 import com.palg.tp.dao.ObjectDetail;
-import com.palg.tp.repository.ObjectDetailRepository;
-import com.palg.tp.dao.ObjectId;
+import com.palg.tp.manager.SessionManager;
 import com.palg.tp.listener.SessionListener;
 import com.palg.tp.mapper.ObjectMapper;
-import com.palg.tp.session.Session;
-import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
+@Service
 public class PersistentObjectsImpl implements PersistentObjects {
 
-    private final List<Session> sessions;
-    //private final List<SessionListener> sessionListeners;
-
+    private static final Logger logger = LoggerFactory.getLogger(PersistentObjectsImpl.class);
     private final ObjectMapper mapper;
+    private final SessionManager manager;
 
-    private final ObjectDetailRepository repository;
-
-    public PersistentObjectsImpl(ObjectMapper mapper, ObjectDetailRepository repository){
+    public PersistentObjectsImpl(ObjectMapper mapper, SessionManager manager) {
         this.mapper = mapper;
-        this.repository = repository;
-        this.sessions = new ArrayList<>();
-    }
-
-    @Override
-    public void creteSession(long key, long timeout) {
-        this.sessions.add(new Session(key, timeout));
-
-        /** TODO: que hacemos si ya existe una session con esa key?
-        if(session == null) {
-            session = new Session(key, timeout);
-            sessionListeners.forEach(sessionListener -> sessionListener.sessionOpened(key));
-        } else throw new RuntimeException("Hay una session creada con la clave %s".formatted(key));
-         **/
+        this.manager = manager;
     }
 
     @Override
     public void store(long key, Object o) {
-        // TODO: chequear que exista la session
-        String json = this.mapper.toJson(o);
-        ObjectDetail details = new ObjectDetail(key, o.getClass().getCanonicalName(), json);
-        // TODO: que hacemos si ya existe un registro con esa key?
-        this.repository.save(details);
+        logger.info("[persistentObjects] saving object %s for session %d".formatted(o.getClass().getCanonicalName(), key));
+        this.mapper.toJson(o)
+                .map(json -> new ObjectDetail(key, o.getClass().getCanonicalName(), json))
+                .ifPresentOrElse(details -> this.manager.store(key, details), () -> logger.info("[persistentObjects] object is not persistable for session %d".formatted(key)));
     }
 
     @Override
     public Object load(long key, Class<?> clazz) {
-        // TODO: chequear que exista la session
-        Optional<ObjectDetail> details = this.repository.findById(new ObjectId(key, clazz.getCanonicalName()));
-        return this.mapper.toObject(details.map(ObjectDetail::getData).orElse(Strings.EMPTY), clazz);
+        Optional<ObjectDetail> detail = this.manager.load(key, clazz);
+
+        logger.info("[persistentObjects] loading object from session: %s".formatted(detail));
+
+        return detail.map(d -> this.mapper.toObject(d.getData(), clazz)).orElse(null);
     }
 
-    @Transactional
     @Override
     public Object remove(long key, Class<?> clazz) {
-        ObjectId id = new ObjectId(key, clazz.getCanonicalName());
-        ObjectDetail details = this.repository.findById(id).orElse(null);
+        logger.info("[persistentObjects] removing object %s from session %d".formatted(clazz, key));
 
-        if (details != null) {
-            this.repository.deleteById(id);
-            return details;
-        }
+        Optional<ObjectDetail> detail = this.manager.remove(key, clazz);
 
-        return null;
+        return detail.map(d -> this.mapper.toObject(d.getData(), clazz)).orElse(null);
+    }
+
+    @Override
+    public void createSession(long key, long timeout) {
+        this.manager.createSession(key, timeout);
     }
 
     @Override
     public void destroySession(long key) {
-        // TODO: que hacemos con los registros de la base asociados a la session?
-        this.sessions.removeIf(session -> key == session.getKey());
+        this.manager.destroySession(key);
     }
 
     @Override
     public void addListener(SessionListener sessionListener) {
-        //sessionListeners.add(sessionListener);
+        this.manager.addListener(sessionListener);
     }
 
     @Override
     public void removeListener(SessionListener sessionListener) {
-       // sessionListeners.remove(sessionListener);
+        this.manager.removeListener(sessionListener);
     }
 }

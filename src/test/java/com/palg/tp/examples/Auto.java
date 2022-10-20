@@ -10,17 +10,16 @@ import java.util.Objects;
 public class Auto {
     @NotPersistable
     String marca;
-    @Persistable
+
     String color;
 
-    @Persistable
     int ruedas;
+
     @NotPersistable
     long combustible;
-    @Persistable
+
     BigDecimal precio;
 
-    @Persistable
     Motor motor;
 
     public Auto(String marca, String color, int ruedas, long combustible, BigDecimal precio, Motor motor) {

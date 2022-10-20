@@ -1,7 +1,10 @@
 package com.palg.tp;
 
-import com.palg.tp.dao.ObjectDetail;
 import com.palg.tp.examples.Animal;
+import com.palg.tp.examples.Auto;
+import com.palg.tp.examples.Motor;
+import com.palg.tp.listener.ConsoleLoggerSessionListener;
+import com.palg.tp.manager.SessionManager;
 import com.palg.tp.mapper.ObjectMapper;
 import com.palg.tp.persistence.PersistentObjects;
 import com.palg.tp.persistence.PersistentObjectsImpl;
@@ -10,14 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
+
+import java.math.BigDecimal;
 
 @SpringBootTest
 class TpApplicationTests {
-
-    private static final Logger log = LoggerFactory.getLogger(TpApplication.class);
 
     @Autowired
     ObjectMapper mapper;
@@ -25,50 +26,58 @@ class TpApplicationTests {
     @Autowired
     ObjectDetailRepository repository;
 
+    @Autowired
+    SessionManager manager;
+
     @Test
-    void prueba() {
-        PersistentObjects po = new PersistentObjectsImpl(mapper, repository);
-        po.creteSession(1L, 10L);
-        print(repository);
+    void prueba() throws InterruptedException {
+        PersistentObjects po = new PersistentObjectsImpl(mapper, manager);
+        po.addListener(new ConsoleLoggerSessionListener());
+
+        po.createSession(1L, 5000L);
+        po.createSession(2L, 8000L);
+
+        Thread.sleep(10000L);
+
         po.store(1L, "hola mundo");
-        print(repository);
+
+        Thread.sleep(1000L);
+
         String fromDB = (String) po.load(1L, String.class);
 
-        log.info("hello: " + fromDB);
+        Thread.sleep(10000L);
 
-        Animal mono = new Animal(100, "mono", false, true);
+        Auto auto = new Auto(
+                "audi",
+                "verde",
+                4,
+                100L,
+                BigDecimal.valueOf(999999),
+                new Motor("v15", 1500)
+        );
 
-        log.info("agrego mono a la base");
-        po.store(1L, mono);
+        po.store(1L, auto);
 
-        print(repository);
+        po.store(2L, 12345);
 
-        log.info("recupero mono de la base");
-        Animal monoDB = (Animal) po.load(1L, Animal.class);
+        Thread.sleep(10000L);
 
-        log.info("mono from DB: " + monoDB);
+        po.load(1L, Auto.class);
 
-        po.creteSession(2L, 15L);
+        this.manager.printEverything();
 
-        Animal gorila = new Animal(1, "gorila", true, false);
+        po.store(2L, new Animal(10, "mono", true, true));
 
-        po.store(2L, gorila);
+        po.remove(1L, String.class);
 
-        print(repository);
+        Thread.sleep(2000L);
 
-        log.info("recupero gorila de la base");
-        Animal gorilaDB = (Animal) po.load(2L, Animal.class);
+        po.destroySession(1L);
 
-        log.info("gorila from DB: " + gorilaDB);
-    }
+        Thread.sleep(2000L);
 
-    private static void print(ObjectDetailRepository repository) {
-        log.info("ObjectDetail found with findAll():");
-        log.info("-------------------------------");
-        for (
-                ObjectDetail objectDetail : repository.findAll()) {
-            log.info(objectDetail.toString());
-        }
-        log.info("");
+        this.manager.printEverything();
+
+        po.createSession(2L, 1000L);
     }
 }

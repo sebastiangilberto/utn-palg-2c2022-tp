@@ -1,0 +1,144 @@
+package com.palg.tp.manager;
+
+import com.palg.tp.dao.ObjectDetail;
+import com.palg.tp.dao.ObjectId;
+import com.palg.tp.dao.Session;
+import com.palg.tp.exception.SessionNotExistsException;
+import com.palg.tp.listener.SessionListener;
+import com.palg.tp.repository.ObjectDetailRepository;
+import com.palg.tp.repository.SessionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.util.*;
+
+@Service
+public class SessionManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(SessionManager.class);
+
+    private final List<SessionListener> listeners;
+
+    private final SessionRepository sessionRepository;
+    private final ObjectDetailRepository objectDetailRepository;
+
+    private static final long listenerPeriod = 2000L;
+
+    public SessionManager(SessionRepository sessionRepository, ObjectDetailRepository objectDetailRepository) {
+        this.sessionRepository = sessionRepository;
+        this.objectDetailRepository = objectDetailRepository;
+        this.listeners = new ArrayList<>();
+        Timer timer = new Timer();
+        SessionChecker checker = new SessionChecker(this);
+        timer.schedule(checker, 0, listenerPeriod);
+    }
+
+    @Transactional
+    public void createSession(long key, long timeout) {
+        boolean exists = this.sessionRepository.existsById(key);
+
+        if (exists) {
+            throw new SessionNotExistsException("session %d already exists".formatted(key));
+        } else {
+            Session session = new Session(key, timeout);
+            logger.info("[manager] creating session %s".formatted(session.toString()));
+            this.sessionRepository.save(session);
+        }
+    }
+
+    @Transactional
+    public void destroySession(long key) {
+        if (this.sessionRepository.existsById(key)) {
+            logger.info("[manager] session deleted with key: %d".formatted(key));
+            logger.info("[manager] all objects deleted for session %d".formatted(key));
+            this.objectDetailRepository.deleteByKey(key);
+            this.sessionRepository.deleteById(key);
+        } else {
+            throw new SessionNotExistsException("session %d not found".formatted(key));
+        }
+    }
+
+    @Transactional
+    public void store(long key, ObjectDetail details) throws SessionNotExistsException {
+        Optional<Session> session = this.sessionRepository.findById(key);
+
+        if (session.isPresent()) {
+            logger.info("[manager] saving object %s to session %d".formatted(details.toString(), key));
+            this.objectDetailRepository.save(details);
+            this.updateLastAccess(session.get());
+        } else {
+            throw new SessionNotExistsException("session %d not found".formatted(key));
+        }
+    }
+
+    @Transactional
+    public Optional<ObjectDetail> load(long key, Class<?> clazz) throws SessionNotExistsException {
+        Optional<Session> session = this.sessionRepository.findById(key);
+
+        if (session.isPresent()) {
+            logger.info("[manager] loading object %s from session %d".formatted(clazz.getCanonicalName(), key));
+
+            this.updateLastAccess(session.get());
+
+            return this.objectDetailRepository.findById(new ObjectId(key, clazz.getCanonicalName()));
+        } else {
+            throw new SessionNotExistsException("session %d not found".formatted(key));
+        }
+    }
+
+    @Transactional
+    public Optional<ObjectDetail> remove(long key, Class<?> clazz) throws SessionNotExistsException {
+        Optional<Session> session = this.sessionRepository.findById(key);
+
+        if (session.isPresent()) {
+            ObjectId id = new ObjectId(key, clazz.getCanonicalName());
+            Optional<ObjectDetail> optDetails = this.objectDetailRepository.findById(id);
+
+            if (optDetails.isPresent()) {
+                ObjectDetail details = optDetails.get();
+
+                logger.info("[manager] removing from session %d, object %s".formatted(key, details.toString()));
+
+                this.objectDetailRepository.delete(details);
+
+                this.updateLastAccess(session.get());
+            }
+
+            return optDetails;
+        } else {
+            throw new SessionNotExistsException("session %d not found".formatted(key));
+        }
+    }
+
+    public List<SessionListener> getListeners() {
+        return this.listeners;
+    }
+
+    Iterable<Session> getSessions() {
+        return this.sessionRepository.findAll();
+    }
+
+    public void addListener(SessionListener listener) {
+        this.listeners.add(listener);
+    }
+
+    public void removeListener(SessionListener listener) {
+        this.listeners.remove(listener);
+    }
+
+
+    private void updateLastAccess(Session session) {
+        session.setLastAccess(System.currentTimeMillis());
+        logger.info("[manager] updating session %s".formatted(session.toString()));
+        this.sessionRepository.save(session);
+    }
+
+    public void printEverything() {
+        logger.info("==============================================================================================");
+        this.sessionRepository.findAll().forEach(s -> logger.info("[manager] session: %s".formatted(s.toString())));
+        this.objectDetailRepository.findAll().forEach(o -> logger.info("[manager] object: %s".formatted(o.toString())));
+        logger.info("==============================================================================================");
+    }
+}

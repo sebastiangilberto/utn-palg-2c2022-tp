@@ -1,15 +1,16 @@
 package com.palg.tp.mapper;
 
+import com.palg.tp.examples.Animal;
 import com.palg.tp.examples.Auto;
 import com.palg.tp.examples.Motor;
+import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 class JsonMapperTest {
 
@@ -31,9 +32,36 @@ class JsonMapperTest {
                 new Motor("v8", 1000)
         );
 
-        String json = this.mapper.toJson(auto);
+        String json = this.mapper.toJson(auto).orElse(Strings.EMPTY);
 
         assertThat(json, is(equalTo("{\"color\":\"gris\",\"ruedas\":4,\"precio\":5500,\"motor\":{\"caballosFuerza\":1000}}")));
+    }
+
+    @Test
+    void notPersistableToJson() {
+        Animal a = new Animal(10, "mono", true, false);
+
+        String json = this.mapper.toJson(a).orElse(Strings.EMPTY);
+
+        assertThat(json, is(emptyString()));
+    }
+
+    @Test
+    void StringToJson() {
+        String s = "Hola Mundo";
+
+        String json = this.mapper.toJson(s).orElse(Strings.EMPTY);
+
+        assertThat(json, is(equalTo("\"Hola Mundo\"")));
+    }
+
+    @Test
+    void IntegerToJson() {
+        Integer i = 12345;
+
+        String json = this.mapper.toJson(i).orElse(Strings.EMPTY);
+
+        assertThat(json, is(equalTo("12345")));
     }
 
     @Test

@@ -10,21 +10,28 @@ public class PersistableStrategy implements ExclusionStrategy {
     }
 
     public boolean shouldSkipField(FieldAttributes f) {
-        /* si la clase "contenedora"
-         // a) existe
-                        -> clase contenedora no tiene la annotation Persistable -> skipeo (true)
-                        -> clase contenedora tiene la annotation Persistable -> no skipeo (false)
-         // b) no existe
-                        -> no tiene la annotation Persistable -> skipeo (true)
-                        -> tiene la annotation Persistable -> no skipeo (false)
+        /*
+        a) clase sin Persistable
+            1) field sin Persistable -> skipeo (true)
+            2) field con NotPersistable -> skipeo (true)
+            3) field con Persistable -> no skipeo (false)
+        b) clase con Persistable
+            1) field sin Persistable -> no skipeo (false)
+            2) field con NotPersistable -> skipeo (true)
+            3) field con Persistable -> no skipeo (false)
          */
+        boolean skip;
+
         Class<?> declaringClass = f.getDeclaringClass();
 
-        // TODO: si el Persistable a nivel class hace todo persistible salvo los explícitos, hay que cambiar esto
         if (declaringClass.getAnnotation(Persistable.class) != null){
-            return f.getAnnotation(Persistable.class) == null || f.getAnnotation(NotPersistable.class) != null;
+            // La clase tiene la annotation Persistable, entonces omito solo si el campo tiene el NotPersistable
+            skip = f.getAnnotation(NotPersistable.class) != null;
+        } else {
+            // La clase NO tiene la annotation Persistable, entonces omito solo si el campo NO tiene el Persistable
+            skip = f.getAnnotation(Persistable.class) == null;
         }
 
-        return true;
+        return skip;
     }
 }

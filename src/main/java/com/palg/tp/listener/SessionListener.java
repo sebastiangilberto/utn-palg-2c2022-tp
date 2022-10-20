@@ -29,4 +29,5 @@ public interface SessionListener {
      * @param key
      */
     void sessionStillOpened(long key);
+
 }

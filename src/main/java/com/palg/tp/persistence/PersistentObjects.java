@@ -10,7 +10,7 @@ public interface PersistentObjects {
      * @param key
      * @param timeout
      */
-    void creteSession(long key, long timeout);
+    void createSession(long key, long timeout);
 
     /**
      * Almacena un objeto asociado a dicha clave
@@ -58,5 +58,4 @@ public interface PersistentObjects {
      * @param lst
      */
     void removeListener(SessionListener lst);
-
 }

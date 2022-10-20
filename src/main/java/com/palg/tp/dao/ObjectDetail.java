@@ -1,23 +1,21 @@
 package com.palg.tp.dao;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
+import javax.persistence.*;
 
 @Entity
 @IdClass(ObjectId.class)
 public class ObjectDetail {
 
     @Id
-    private long sessionKey;
+    private String objectType;
 
     @Id
-    private String objectType;
+    private long key;
 
     private String data;
 
-    public ObjectDetail(long sessionKey, String objectType, String data) {
-        this.sessionKey = sessionKey;
+    public ObjectDetail(long key, String objectType, String data) {
+        this.key = key;
         this.objectType = objectType;
         this.data = data;
     }
@@ -32,8 +30,8 @@ public class ObjectDetail {
     @Override
     public String toString() {
         return "ObjectDetail{" +
-                "sessionKey=" + sessionKey +
-                ", objectType='" + objectType + '\'' +
+                "objectType='" + objectType + '\'' +
+                ", key=" + key +
                 ", data='" + data + '\'' +
                 '}';
     }

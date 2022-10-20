@@ -4,7 +4,6 @@ import com.palg.tp.annotations.Persistable;
 
 import java.util.Objects;
 
-@Persistable
 public class Motor {
     String tipo;
     @Persistable
