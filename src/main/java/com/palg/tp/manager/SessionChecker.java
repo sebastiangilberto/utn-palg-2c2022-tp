@@ -21,9 +21,7 @@ public class SessionChecker extends TimerTask {
 
     @Override
     public void run() {
-        for (Session session : this.manager.getSessions()) {
-            checkStatus(session);
-        }
+        this.manager.getSessions().forEach(this::checkStatus);
     }
 
 

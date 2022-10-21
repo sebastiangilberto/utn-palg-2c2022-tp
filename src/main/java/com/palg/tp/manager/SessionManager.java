@@ -12,7 +12,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Timer;
 
 @Service
 public class SessionManager {
@@ -37,79 +40,77 @@ public class SessionManager {
 
     @Transactional
     public void createSession(long key, long timeout) {
-        boolean exists = this.sessionRepository.existsById(key);
-
-        if (exists) {
-            throw new SessionNotExistsException("session %d already exists".formatted(key));
-        } else {
-            Session session = new Session(key, timeout);
-            logger.info("[manager] creating session %s".formatted(session.toString()));
-            this.sessionRepository.save(session);
-        }
+        this.sessionRepository.findById(key).ifPresentOrElse(
+                (session) -> {
+                    throw new SessionNotExistsException("session %d already exists".formatted(key));
+                },
+                () -> {
+                    Session session = new Session(key, timeout);
+                    logger.info("[manager] creating session %s".formatted(session.toString()));
+                    this.sessionRepository.save(session);
+                }
+        );
     }
 
     @Transactional
     public void destroySession(long key) {
-        if (this.sessionRepository.existsById(key)) {
-            logger.info("[manager] session deleted with key: %d".formatted(key));
-            logger.info("[manager] all objects deleted for session %d".formatted(key));
-            this.objectDetailRepository.deleteByKey(key);
-            this.sessionRepository.deleteById(key);
-        } else {
-            throw new SessionNotExistsException("session %d not found".formatted(key));
-        }
+        this.sessionRepository.findById(key).ifPresentOrElse(
+                (session) -> {
+                    logger.info("[manager] session deleted with key: %d".formatted(key));
+                    logger.info("[manager] all objects deleted for session %d".formatted(key));
+                    this.objectDetailRepository.deleteByKey(key);
+                    this.sessionRepository.deleteById(key);
+                },
+                () -> {
+                    throw new SessionNotExistsException("session %d not found".formatted(key));
+                }
+        );
     }
 
     @Transactional
     public void store(long key, ObjectDetail details) throws SessionNotExistsException {
-        Optional<Session> session = this.sessionRepository.findById(key);
+        this.sessionRepository.findById(key).ifPresentOrElse(
+                (session) -> {
+                    logger.info("[manager] saving object %s to session %d".formatted(details.toString(), key));
+                    this.objectDetailRepository.save(details);
+                    this.updateLastAccess(session);
+                },
+                () -> {
+                    throw new SessionNotExistsException("session %d not found".formatted(key));
+                }
+        );
 
-        if (session.isPresent()) {
-            logger.info("[manager] saving object %s to session %d".formatted(details.toString(), key));
-            this.objectDetailRepository.save(details);
-            this.updateLastAccess(session.get());
-        } else {
-            throw new SessionNotExistsException("session %d not found".formatted(key));
-        }
     }
 
     @Transactional
     public Optional<ObjectDetail> load(long key, Class<?> clazz) throws SessionNotExistsException {
-        Optional<Session> session = this.sessionRepository.findById(key);
-
-        if (session.isPresent()) {
-            logger.info("[manager] loading object %s from session %d".formatted(clazz.getCanonicalName(), key));
-
-            this.updateLastAccess(session.get());
-
-            return this.objectDetailRepository.findById(new ObjectId(key, clazz.getCanonicalName()));
-        } else {
-            throw new SessionNotExistsException("session %d not found".formatted(key));
-        }
+        return this.sessionRepository.findById(key).map(
+                (session) -> {
+                    logger.info("[manager] loading object %s from session %d".formatted(clazz.getCanonicalName(), key));
+                    this.updateLastAccess(session);
+                    return this.objectDetailRepository.findById(new ObjectId(key, clazz.getCanonicalName()));
+                }
+        ).orElseThrow(
+                () -> new SessionNotExistsException("session %d not found".formatted(key))
+        );
     }
 
     @Transactional
     public Optional<ObjectDetail> remove(long key, Class<?> clazz) throws SessionNotExistsException {
-        Optional<Session> session = this.sessionRepository.findById(key);
-
-        if (session.isPresent()) {
-            ObjectId id = new ObjectId(key, clazz.getCanonicalName());
-            Optional<ObjectDetail> optDetails = this.objectDetailRepository.findById(id);
-
-            if (optDetails.isPresent()) {
-                ObjectDetail details = optDetails.get();
-
-                logger.info("[manager] removing from session %d, object %s".formatted(key, details.toString()));
-
-                this.objectDetailRepository.delete(details);
-
-                this.updateLastAccess(session.get());
-            }
-
-            return optDetails;
-        } else {
-            throw new SessionNotExistsException("session %d not found".formatted(key));
-        }
+        return this.sessionRepository.findById(key).map(
+                (session) -> {
+                    ObjectId id = new ObjectId(key, clazz.getCanonicalName());
+                    return this.objectDetailRepository.findById(id).map(
+                            (details) -> {
+                                logger.info("[manager] removing from session %d, object %s".formatted(key, details.toString()));
+                                this.objectDetailRepository.delete(details);
+                                this.updateLastAccess(session);
+                                return details;
+                            });
+                }
+        ).orElseThrow(
+                () -> new SessionNotExistsException("session %d not found".formatted(key))
+        );
     }
 
     public List<SessionListener> getListeners() {
