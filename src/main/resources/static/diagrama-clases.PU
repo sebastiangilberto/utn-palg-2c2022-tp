@@ -11,23 +11,8 @@ interface PersistentObjects {
 }
 
 class PersistentObjectsImpl {
-  Notifier: Notifier
-  Mapper: ObjectDetailsMapper
-  Session: Session
-  Repository: ObjectDetailsRepository
-}
-
-interface Notifier {
-  +void sessionClosed(long)
-  +void sessionStillClosed(long)
-  +void sessionOpened(long)
-  +void sessionStillOpened(long)
-  +void addListener(SessionListener)
-  +void removeListener(SessionListener)
-}
-
-class SequentialNotifier {
-  Listeners: List<SessionListener>
+  mapper: ObjectMapper
+  manager: SessionManager
 }
 
 interface SessionListener {
@@ -37,45 +22,85 @@ interface SessionListener {
   +void sessionStillOpened(long)
 }
 
-class LoggerSessionListener {
+class ConsoleLoggerSessionListener {
   Logger: Logger
 }
 
 class Session {
-  Key: String
-  Timeout: int
-  Status: SessionStatus
+  key: String
+  timeout: int
+  status: SessionStatus
   +void close()
   +void open()
 }
 
-enum SessionStatus{
-  OPEN, CLOSED
+class SessionManager {
+  sessionRepository: SessionRepository
+  objectDetailRepository: ObjectDetailRepository
+  listenerPeriod: Long
+  +void createSession(long, long)
+  +void destroySession(long)
+  +void store(long, ObjectDetail)
+  +void load(long,Class<?>)
+  +void remove(long,Class<?>)
 }
 
-class ObjectDetailsMapper {
+class SessionChecker {
+  manager: SessionManager
+  statuses: Map<long, SessionStatus>
+  listenerPeriod: Long
+  +void checkStatus(Session)
+}
+
+
+interface TimerTask {
+  +run()
+}
+
+interface ObjectMapper {
   +toObject(String, Class)
   +toJson(Object)
 }
 
-class ObjectDetailsRepository {
+class PersistableStrategy {
++ boolean shouldSkipClass(Class<?>)
++ boolean shouldSkipField(FieldAttributes)
+}
+
+class JsonMapper {
+}
+
+interface ObjectDetailRepository {
   +findByKey(String)
   +deleteByKey(String)
+}
+
+interface SessionRepository {
 }
 
 interface CrudRepository{
   +save(Entity)
 }
 
-LoggerSessionListener --|> SessionListener
+enum SessionStatus{
+OPEN, CLOSED
+}
+
+ConsoleLoggerSessionListener --|> SessionListener
 PersistentObjectsImpl --|> PersistentObjects
-PersistentObjectsImpl --> Session
-PersistentObjectsImpl --> ObjectDetailsMapper
-PersistentObjectsImpl --> ObjectDetailsRepository
-PersistentObjectsImpl --> Notifier
-SequentialNotifier --|> Notifier
-Notifier "1" --> "N" SessionListener
-Session --> SessionStatus
-ObjectDetailsRepository --|> CrudRepository
+PersistentObjectsImpl --> SessionManager
+PersistentObjectsImpl --> ObjectMapper
+SessionManager --> ObjectDetailRepository
+SessionManager --> SessionRepository
+SessionManager --> SessionChecker
+SessionChecker --> Session
+SessionChecker --> Session
+SessionChecker --> SessionStatus
+SessionManager "1" --> "N" SessionListener
+ObjectDetailRepository --|> CrudRepository
+SessionRepository --|> CrudRepository
+ObjectMapper --|> JsonMapper
+JsonMapper --> PersistableStrategy
+
 
 @enduml
