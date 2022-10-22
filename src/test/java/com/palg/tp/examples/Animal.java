@@ -2,8 +2,7 @@ package com.palg.tp.examples;
 
 import com.palg.tp.annotations.Persistable;
 
-
-
+@Persistable
 public class Animal {
 
     private Integer edad;

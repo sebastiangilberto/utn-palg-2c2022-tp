@@ -1,8 +1,8 @@
 package com.palg.tp.mapper;
 
-import com.palg.tp.examples.Animal;
 import com.palg.tp.examples.Auto;
 import com.palg.tp.examples.Motor;
+import com.palg.tp.examples.Persona;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,9 +39,9 @@ class JsonMapperTest {
 
     @Test
     void notPersistableToJson() {
-        Animal a = new Animal(10, "mono", true, false);
+        Persona p = new Persona("juan", 1,123456789);
 
-        String json = this.mapper.toJson(a).orElse(Strings.EMPTY);
+        String json = this.mapper.toJson(p).orElse(Strings.EMPTY);
 
         assertThat(json, is(emptyString()));
     }
