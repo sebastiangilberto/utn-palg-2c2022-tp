@@ -13,4 +13,5 @@
 
 <img src="src/main/resources/static/palg-diagrama-clases.png" alt="diagrama de clases">
 
-[### Consideraciones / Asunciones](/src/main/resources/docs/Consideraciones.md)
+### Consideraciones / Asunciones
+[Consideraciones](/src/main/resources/docs/Consideraciones.md)
