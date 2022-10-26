@@ -1,4 +1,4 @@
-<h1 align="center"> Telemetria </h1>
+<h1 align="center"> Persistidor de objetos </h1>
 <p align="center">
 <img src="src/main/resources/static/spring-data-jpa.svg") width=50% height=50% >
 </p>
