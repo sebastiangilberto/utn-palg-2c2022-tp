@@ -129,7 +129,6 @@ public class SessionManager {
         this.listeners.remove(listener);
     }
 
-
     private void updateLastAccess(Session session) {
         session.setLastAccess(System.currentTimeMillis());
         logger.info("[manager] updating session %s".formatted(session.toString()));

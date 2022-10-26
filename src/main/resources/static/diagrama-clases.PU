@@ -92,9 +92,9 @@ PersistentObjectsImpl --> SessionManager
 PersistentObjectsImpl --> ObjectMapper
 SessionManager --> ObjectDetailRepository
 SessionManager --> SessionRepository
-SessionManager --> SessionChecker
-SessionChecker --> Session
-SessionChecker --> Session
+SessionManager --> Session
+SessionChecker --> SessionManager
+SessionChecker --|> TimerTask
 SessionChecker --> SessionStatus
 SessionManager "1" --> "N" SessionListener
 ObjectDetailRepository --|> CrudRepository
