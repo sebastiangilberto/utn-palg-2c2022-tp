@@ -2,7 +2,7 @@
 <p align="center">
 <img src="src/main/resources/static/spring-data-jpa.svg") width=50% height=50% >
 </p>
-<p align="center"> Trabajo Practico - Patrones Algoritmicos para Estructuras Avanzadas - UTN FRBA 2022 12 <p>
+<p align="center"> Trabajo Practico - Patrones Algoritmicos para Estructuras Avanzadas - UTN FRBA 2022 2C <p>
 
 ## Integrantes
 
