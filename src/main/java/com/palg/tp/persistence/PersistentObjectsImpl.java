@@ -62,11 +62,13 @@ public class PersistentObjectsImpl implements PersistentObjects {
 
     @Override
     public void addListener(SessionListener sessionListener) {
+        logger.info(("[persistentObjects] adding listener"));
         this.manager.addListener(sessionListener);
     }
 
     @Override
     public void removeListener(SessionListener sessionListener) {
+        logger.info(("[persistentObjects] removing listener"));
         this.manager.removeListener(sessionListener);
     }
 }
