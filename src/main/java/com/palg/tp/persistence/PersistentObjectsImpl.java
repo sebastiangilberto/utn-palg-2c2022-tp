@@ -56,6 +56,7 @@ public class PersistentObjectsImpl implements PersistentObjects {
 
     @Override
     public void destroySession(long key) {
+        logger.info(("[persistentObjects] destroying session %d").formatted(key));
         this.manager.destroySession(key);
     }
 

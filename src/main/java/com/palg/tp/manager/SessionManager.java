@@ -56,10 +56,10 @@ public class SessionManager {
     public void destroySession(long key) {
         this.sessionRepository.findById(key).ifPresentOrElse(
                 (session) -> {
-                    logger.info("[manager] session deleted with key: %d".formatted(key));
-                    logger.info("[manager] all objects deleted for session %d".formatted(key));
                     this.objectDetailRepository.deleteByKey(key);
+                    logger.info("[manager] all objects deleted for session %d".formatted(key));
                     this.sessionRepository.deleteById(key);
+                    logger.info("[manager] session deleted with key: %d".formatted(key));
                 },
                 () -> {
                     throw new SessionNotExistsException("session %d not found".formatted(key));
