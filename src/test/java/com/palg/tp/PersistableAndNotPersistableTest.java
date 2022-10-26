@@ -206,4 +206,11 @@ class PersistableAndNotPersistableTest {
         po.remove(1L, Auto.class);
         manager.printEverything();
     }
+
+    @Test
+    void session1_loadObjectNotExist_listener1() throws InterruptedException {
+        po.createSession(1L, 5000L);
+        Thread.sleep(10000L);
+        assertThat(po.load(1L, Auto.class), is(nullValue()));
+    }
 }
