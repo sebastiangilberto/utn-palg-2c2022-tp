@@ -10,6 +10,7 @@ import java.util.TimerTask;
 
 public class SessionChecker extends TimerTask {
 
+    private static final Logger logger = LoggerFactory.getLogger(SessionChecker.class);
     private final SessionManager manager;
 
     private final Map<Long, SessionStatus> statuses;
@@ -21,6 +22,7 @@ public class SessionChecker extends TimerTask {
 
     @Override
     public void run() {
+        logger.info("[sessionChecker] running checker, retrieving sessions from DB");
         this.manager.getSessions().forEach(this::checkStatus);
     }
 
@@ -31,6 +33,8 @@ public class SessionChecker extends TimerTask {
         b) no cambio -> notifico según el valor actual
     */
     public void checkStatus(Session session) {
+        logger.info("[sessionChecker] cheking status for session: %d".formatted(session.getKey()));
+
         SessionStatus currentStatus = getSessionStatus(session);
         SessionStatus lastStatus = this.statuses.get(session.getKey());
 
@@ -44,16 +48,20 @@ public class SessionChecker extends TimerTask {
 
     private void notifyNewStatus(long key, SessionStatus status) {
         if (status == SessionStatus.OPEN) {
+            logger.info("[sessionChecker] session %d is now OPEN, notifying listeners".formatted(key));
             this.manager.getListeners().forEach(l -> l.sessionOpened(key));
         } else {
+            logger.info("[sessionChecker] session %d is now CLOSED, notifying listeners".formatted(key));
             this.manager.getListeners().forEach(l -> l.sessionClosed(key));
         }
     }
 
     private void notifySameStatus(long key, SessionStatus status) {
         if (status == SessionStatus.OPEN) {
+            logger.info("[sessionChecker] session %d remains OPEN, notifying listeners".formatted(key));
             this.manager.getListeners().forEach(l -> l.sessionStillOpened(key));
         } else {
+            logger.info("[sessionChecker] session %d remains CLOSED, notifying listeners".formatted(key));
             this.manager.getListeners().forEach(l -> l.sessionStillClosed(key));
         }
     }

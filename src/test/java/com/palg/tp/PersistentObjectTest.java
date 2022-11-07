@@ -139,9 +139,8 @@ public class PersistentObjectTest
 
         // la destruyo
         po.destroySession(key1);
-        asegurarTiraExcepcion(()->po.load(1233L,String.class));
+        asegurarTiraExcepcion(()->po.load(key1,String.class));
         po.createSession(key1,100000);
-
     }
 
 

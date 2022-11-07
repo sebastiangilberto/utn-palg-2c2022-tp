@@ -9,6 +9,7 @@ import com.palg.tp.repository.ObjectDetailRepository;
 import com.palg.tp.repository.SessionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -27,9 +28,7 @@ public class SessionManager {
     private final SessionRepository sessionRepository;
     private final ObjectDetailRepository objectDetailRepository;
 
-    private static final long listenerPeriod = 2000L;
-
-    public SessionManager(SessionRepository sessionRepository, ObjectDetailRepository objectDetailRepository) {
+    public SessionManager(SessionRepository sessionRepository, ObjectDetailRepository objectDetailRepository, @Value("${palg.listener.period}") Long listenerPeriod) {
         this.sessionRepository = sessionRepository;
         this.objectDetailRepository = objectDetailRepository;
         this.listeners = new ArrayList<>();
